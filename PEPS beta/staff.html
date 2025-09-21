@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PEPS Mart – Staff Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --green:#28a745;
+      --green-dark:#1e7e34;
+      --gradient:linear-gradient(135deg,#28a745,#1e7e34);
+    }
+    body {font-family:'Inter',sans-serif;background:#f8fdf8;}
+    .navbar {background:var(--green-dark);}
+    .navbar-brand,.nav-link{color:#fff!important;}
+    .hero {background: var(--gradient);color: #fff;padding: 1.5rem;border-radius: .75rem;text-align: center;margin:1rem 0;}
+    .card {border:none;border-radius:.75rem;box-shadow:0 4px 12px rgba(0,0,0,.08);transition:.2s;}
+    .card:hover {transform:translateY(-3px);box-shadow:0 6px 15px rgba(0,0,0,.12);}
+    .product-img {width:50px;height:50px;object-fit:cover;border-radius:5px;}
+    footer {background:var(--green-dark);color:#fff;text-align:center;padding:1rem 0;margin-top:2rem;}
+    .btn-sm {padding:2px 8px;font-size:0.85rem;}
+    .table thead th {white-space:nowrap;}
+    .modal-body input, .modal-body select {font-size:0.9rem;}
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="#">PEPS Staff</a>
+    <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#nav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="#dashboard">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="#inventory">Inventory</a></li>
+        <li class="nav-item"><a class="nav-link" href="#requests">Requests</a></li>
+        <li class="nav-item"><a class="nav-link" href="#returns">Returns</a></li>
+        <li class="nav-item"><a class="nav-link" href="#history">History</a></li>
+        <li class="nav-item"><a class="nav-link" href="index.html" onclick="logout()">Logout</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="hero">
+    <h2>👋 Welcome, Staff</h2>
+    <p>Manage products, requests, returns and keep PEPS Mart running smoothly!</p>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="row g-3 mb-4" id="dashboard">
+    <div class="col-md-3 col-6">
+      <div class="card p-3 text-center" onclick="scrollToSection('inventory')">
+        <i class="fas fa-box fa-2x mb-2 text-success"></i>
+        <h4 id="totalProducts">0</h4>
+        <p class="text-muted">Products</p>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="card p-3 text-center" onclick="scrollToSection('inventory')">
+        <i class="fas fa-exclamation-triangle fa-2x mb-2 text-warning"></i>
+        <h4 id="lowStock">0</h4>
+        <p class="text-muted">Low Stock</p>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="card p-3 text-center" onclick="scrollToSection('requests')">
+        <i class="fas fa-envelope fa-2x mb-2 text-info"></i>
+        <h4 id="pendingRequests">0</h4>
+        <p class="text-muted">Requests</p>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="card p-3 text-center" onclick="scrollToSection('returns')">
+        <i class="fas fa-undo fa-2x mb-2 text-secondary"></i>
+        <h4 id="returnsCount">0</h4>
+        <p class="text-muted">Returns</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inventory -->
+  <div class="card p-3 mb-4" id="inventory">
+    <div class="d-flex justify-content-between mb-2 flex-wrap gap-2">
+      <h5 class="fw-bold">Inventory</h5>
+      <div class="d-flex gap-2">
+        <input type="text" id="searchInventory" class="form-control form-control-sm" placeholder="Search...">
+        <select id="filterCategory" class="form-select form-select-sm"><option value="">All Categories</option></select>
+        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#productModal"><i class="fas fa-plus"></i> Add</button>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead class="table-success">
+          <tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Action</th></tr>
+        </thead>
+        <tbody id="inventoryTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Requests -->
+  <div class="card p-3 mb-4" id="requests">
+    <div class="d-flex justify-content-between mb-2 flex-wrap gap-2">
+      <h5 class="fw-bold">Customer Requests</h5>
+      <div class="d-flex gap-2">
+        <input type="text" id="searchRequests" class="form-control form-control-sm" placeholder="Search...">
+        <select id="filterRequestStatus" class="form-select form-select-sm">
+          <option value="">All Status</option>
+          <option value="Pending">Pending</option>
+          <option value="Approved">Approved</option>
+          <option value="Completed">Completed</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead class="table-success">
+          <tr><th>Customer</th><th>Email</th><th>Items</th><th>Total</th><th>Status</th><th>Action</th></tr>
+        </thead>
+        <tbody id="requestTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Returns -->
+  <div class="card p-3 mb-4" id="returns">
+    <div class="d-flex justify-content-between mb-2 flex-wrap gap-2">
+      <h5 class="fw-bold">Returns</h5>
+      <input type="text" id="searchReturns" class="form-control form-control-sm" placeholder="Search...">
+    </div>
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead class="table-success">
+          <tr><th>Customer</th><th>Item</th><th>Date</th><th>Status</th><th>Action</th></tr>
+        </thead>
+        <tbody id="returnTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="card p-3 mb-4" id="history">
+    <div class="d-flex justify-content-between mb-2">
+      <h5 class="fw-bold">History Log</h5>
+      <div>
+        <button class="btn btn-sm btn-secondary me-2" onclick="downloadHistory()"><i class="fas fa-download"></i> Download</button>
+        <button class="btn btn-sm btn-danger" onclick="clearHistory()"><i class="fas fa-trash"></i> Clear</button>
+      </div>
+    </div>
+    <ul class="list-group" id="historyList"></ul>
+  </div>
+</div>
+
+<!-- Product Modal (Add/Edit) -->
+<div class="modal fade" id="productModal" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <form id="productForm">
+      <div class="modal-header">
+        <h5 class="modal-title" id="productModalTitle">Add Product</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="pindex">
+        <input class="form-control mb-2" id="pname" placeholder="Name" required>
+        <select id="pcatSelect" class="form-select mb-2"></select>
+        <input class="form-control mb-2 d-none" id="pcatNew" placeholder="New Category">
+        <input type="number" class="form-control mb-2" id="pprice" placeholder="Price" required>
+        <input type="number" class="form-control mb-2" id="pstock" placeholder="Stock" required>
+        <input class="form-control mb-2" id="pimg" placeholder="Image URL" required>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-success">Save</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+
+<footer><p class="mb-0">&copy; 2024 PEPS Mart</p></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Helpers
+function getData(k){return JSON.parse(localStorage.getItem(k))||[];}
+function saveData(k,d){localStorage.setItem(k,JSON.stringify(d));}
+function addHistory(msg){let h=getData("history");h.unshift({msg,date:new Date().toLocaleString()});saveData("history",h);renderHistory();}
+function scrollToSection(id){document.getElementById(id).scrollIntoView({behavior:"smooth"});}
+
+// Dummy Data
+if(!localStorage.getItem("products")) saveData("products",[
+  {name:"Anker PowerCore 20000mAh",cat:"Battery Pack",price:3500,stock:12,img:"https://placehold.co/100"},
+  {name:"Samsung 25W Super Fast Charger",cat:"Charger",price:1800,stock:8,img:"https://placehold.co/100"},
+  {name:"Baseus USB-C to USB-C Cable 1m",cat:"Cable",price:500,stock:30,img:"https://placehold.co/100"}
+]);
+if(!localStorage.getItem("requests")) saveData("requests",[
+  {name:"John",email:"john@x.com",items:"Anker PowerCore x1",total:3500,status:"Pending"},
+  {name:"Jane",email:"jane@x.com",items:"USB-C Cable x2",total:1000,status:"Approved"}
+]);
+if(!localStorage.getItem("returns")) saveData("returns",[
+  {name:"Tom",item:"Samsung Charger",date:"2024-09-18",status:"Pending"}
+]);
+if(!localStorage.getItem("history")) saveData("history",[]);
+
+// Inventory
+function renderInventory(){
+  const products=getData("products");
+  const tbody=document.getElementById("inventoryTable");
+  const search=document.getElementById("searchInventory").value.toLowerCase();
+  const filter=document.getElementById("filterCategory").value;
+  tbody.innerHTML="";
+  let categories=new Set();
+  products.forEach((p,i)=>{
+    categories.add(p.cat);
+    if((!search||p.name.toLowerCase().includes(search)) && (!filter||p.cat===filter)){
+      tbody.innerHTML+=`
+        <tr>
+          <td><img src="${p.img}" class="product-img"></td>
+          <td>${p.name}</td><td>${p.cat}</td><td>₹${p.price}</td><td>${p.stock}</td>
+          <td>
+            <button class="btn btn-sm btn-primary me-1" onclick="editProduct(${i})"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-sm btn-danger" onclick="deleteProduct(${i})"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>`;
+    }
+  });
+  const filterSel=document.getElementById("filterCategory");
+  filterSel.innerHTML='<option value="">All Categories</option>';
+  categories.forEach(c=>filterSel.innerHTML+=`<option value="${c}">${c}</option>`);
+  updateCategorySelect(categories);
+  document.getElementById("totalProducts").textContent=products.length;
+  document.getElementById("lowStock").textContent=products.filter(p=>p.stock<5).length;
+}
+function updateCategorySelect(categories){
+  const sel=document.getElementById("pcatSelect");
+  sel.innerHTML="";
+  categories.forEach(c=>sel.innerHTML+=`<option value="${c}">${c}</option>`);
+  sel.innerHTML+='<option value="__new">Other / New...</option>';
+}
+document.getElementById("pcatSelect").addEventListener("change",()=>{
+  document.getElementById("pcatNew").classList.toggle("d-none",pcatSelect.value!=="__new");
+});
+document.getElementById("productForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  let products=getData("products");
+  let cat=pcatSelect.value==="__new"?pcatNew.value:pcatSelect.value;
+  let idx=document.getElementById("pindex").value;
+  let newP={name:pname.value,cat,price:+pprice.value,stock:+pstock.value,img:pimg.value};
+  if(idx===""){products.push(newP);addHistory("Product added: "+newP.name+" ("+newP.cat+")");}
+  else {products[idx]=newP;addHistory("Product updated: "+newP.name);}
+  saveData("products",products);renderInventory();e.target.reset();
+  document.getElementById("pindex").value="";
+  document.getElementById("productModalTitle").textContent="Add Product";
+  bootstrap.Modal.getInstance(document.getElementById("productModal")).hide();
+});
+function editProduct(i){
+  let products=getData("products"),p=products[i];
+  document.getElementById("pindex").value=i;
+  document.getElementById("pname").value=p.name;
+  document.getElementById("pprice").value=p.price;
+  document.getElementById("pstock").value=p.stock;
+  document.getElementById("pimg").value=p.img;
+  updateCategorySelect(new Set(products.map(x=>x.cat)));
+  document.getElementById("pcatSelect").value=p.cat;
+  document.getElementById("productModalTitle").textContent="Edit Product";
+  new bootstrap.Modal(document.getElementById("productModal")).show();
+}
+function deleteProduct(i){
+  let products=getData("products");addHistory("Product deleted: "+products[i].name);
+  products.splice(i,1);saveData("products",products);renderInventory();
+}
+
+// Requests
+function renderRequests(){
+  const reqs=getData("requests"), tbody=document.getElementById("requestTable");
+  const search=document.getElementById("searchRequests").value.toLowerCase();
+  const filter=document.getElementById("filterRequestStatus").value;
+  tbody.innerHTML="";
+  reqs.forEach((r,i)=>{
+    if((!search||r.name.toLowerCase().includes(search)||r.email.toLowerCase().includes(search)||r.items.toLowerCase().includes(search)) && (!filter||r.status===filter)){
+      let cls=r.status==="Pending"?"bg-warning":r.status==="Approved"?"bg-success":"bg-secondary";
+      tbody.innerHTML+=`
+        <tr>
+          <td>${r.name}</td><td>${r.email}</td><td>${r.items}</td><td>₹${r.total}</td>
+          <td><span class="badge ${cls}">${r.status}</span></td>
+          <td>
+            <button class="btn btn-sm btn-success" onclick="updateRequest(${i},'Approved')"><i class="fas fa-check"></i></button>
+            <button class="btn btn-sm btn-secondary" onclick="updateRequest(${i},'Completed')"><i class="fas fa-box"></i></button>
+          </td>
+        </tr>`;
+    }
+  });
+  document.getElementById("pendingRequests").textContent=reqs.filter(r=>r.status==="Pending").length;
+}
+function updateRequest(i,status){
+  let reqs=getData("requests");reqs[i].status=status;saveData("requests",reqs);
+  addHistory("Request "+status+": "+reqs[i].name);renderRequests();
+}
+
+// Returns
+function renderReturns(){
+  const rets=getData("returns"), tbody=document.getElementById("returnTable");
+  const search=document.getElementById("searchReturns").value.toLowerCase();
+  tbody.innerHTML="";
+  rets.forEach((r,i)=>{
+    if(!search||r.name.toLowerCase().includes(search)||r.item.toLowerCase().includes(search)){
+      let badge=r.status==="Processed"?'<span class="badge bg-success">Processed</span>':'<span class="badge bg-warning">Pending</span>';
+      tbody.innerHTML+=`
+        <tr>
+          <td>${r.name}</td><td>${r.item}</td><td>${r.date}</td><td>${badge}</td>
+          <td>
+            <button class="btn btn-sm btn-success" onclick="processReturn(${i})"><i class="fas fa-check"></i></button>
+            <button class="btn btn-sm btn-danger" onclick="deleteReturn(${i})"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>`;
+    }
+  });
+  document.getElementById("returnsCount").textContent=rets.length;
+}
+function processReturn(i){
+  let rets=getData("returns");rets[i].status="Processed";saveData("returns",rets);
+  addHistory("Return processed: "+rets[i].name);renderReturns();
+}
+function deleteReturn(i){
+  let rets=getData("returns");addHistory("Return deleted: "+rets[i].name);
+  rets.splice(i,1);saveData("returns",rets);renderReturns();
+}
+
+// History
+function renderHistory(){
+  const h=getData("history"), ul=document.getElementById("historyList");
+  ul.innerHTML="";h.forEach(x=>ul.innerHTML+=`<li class="list-group-item">${x.msg} <small class="text-muted">(${x.date})</small></li>`);
+}
+function clearHistory(){saveData("history",[]);renderHistory();}
+function downloadHistory(){
+  const h=getData("history");if(h.length===0){alert("No history to download.");return;}
+  let csv="Message,Date\n"+h.map(x=>`"${x.msg}","${x.date}"`).join("\n");
+  let blob=new Blob([csv],{type:"text/csv"}),url=URL.createObjectURL(blob);
+  let a=document.createElement("a");a.href=url;a.download="history.csv";a.click();URL.revokeObjectURL(url);
+}
+
+// Init
+renderInventory();renderRequests();renderReturns();renderHistory();
+searchInventory.addEventListener("input",renderInventory);
+filterCategory.addEventListener("change",renderInventory);
+searchRequests.addEventListener("input",renderRequests);
+filterRequestStatus.addEventListener("change",renderRequests);
+searchReturns.addEventListener("input",renderReturns);
+
+// Logout
+function logout(){alert("Logged out!");window.location.href="home.html";}
+</script>
+</body>
+</html>

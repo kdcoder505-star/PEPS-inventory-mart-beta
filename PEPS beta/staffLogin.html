@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PEPS Mart - Staff Login</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background:#f8fdf8; font-family: Inter, sans-serif; }
+    .login-card {
+      max-width:420px; margin:auto; margin-top:7%; padding:2rem;
+      border-radius:1rem; box-shadow:0 6px 18px rgba(0,0,0,0.1); background:white;
+    }
+    .btn-green { background:#28a745; color:#fff; border:none; }
+    .btn-green:hover { background:#1e7e34; color:#fff; }
+    .brand { color:#28a745; font-weight:bold; font-size:1.8rem; text-align:center; margin-bottom:.5rem; }
+    .tagline { text-align:center; color:#666; margin-bottom:1.5rem; }
+    .input-group-text { background:#28a745; color:#fff; border:none; }
+    .link-btn { border:none; background:none; color:#28a745; text-decoration:underline; cursor:pointer; font-size:.9rem; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="login-card">
+    <div class="brand"><i class="fas fa-store"></i> PEPS Mart</div>
+    <p class="tagline">Staff Access Portal</p>
+    <h4 class="text-center mb-3">👨‍💼 Staff Login</h4>
+    
+    <form id="loginForm">
+      <div class="mb-3 input-group">
+        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+        <input type="email" id="email" class="form-control" placeholder="staff1@peps.com" required>
+      </div>
+      <div class="mb-3 input-group">
+        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+        <input type="password" id="password" class="form-control" placeholder="password123" required>
+      </div>
+      <button class="btn btn-green w-100 mb-2"><i class="fas fa-sign-in-alt"></i> Login</button>
+    </form>
+
+    <div class="text-center mt-2">
+      <a href="index.html" class="btn btn-outline-success"><i class="fas fa-arrow-left"></i>  Back</a>
+    </div>
+  </div>
+</div>
+
+<script>
+/* --- Dummy Staff Accounts --- */
+const dummyStaff = [
+  { email:"staff1@peps.com", password:"password123", name:"Staff One" },
+  { email:"staff2@peps.com", password:"staffpass", name:"Staff Two" }
+];
+
+/* --- Handle Login --- */
+document.getElementById("loginForm").addEventListener("submit", function(e){
+  e.preventDefault();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+
+  const found = dummyStaff.find(u=>u.email===email && u.password===password);
+  if(found){
+    localStorage.setItem("loggedStaff", JSON.stringify(found));
+    alert("✅ Welcome " + found.name + "!");
+    window.location.href="staff.html"; // redirect
+  } else {
+    alert("❌ Invalid email or password. Try again.");
+  }
+});
+
+/* --- Back --- */
+function goBack(){
+  window.location.href="home.html"; // go back to homepage
+}
+</script>
+</body>
+</html>

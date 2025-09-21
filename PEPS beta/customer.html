@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PEPS Mart - Customer Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background:#f8fdf8; font-family: Inter, sans-serif; }
+    .navbar { background:#28a745; }
+    .navbar-brand, .nav-link { color:#fff !important; }
+    .hero { background: linear-gradient(135deg,#28a745,#1e7e34); color:#fff; padding:2rem; border-radius:.6rem; text-align:center; margin:1rem 0; }
+    .card { border-radius:.6rem; box-shadow:0 4px 12px rgba(0,0,0,0.08); }
+    .cart-card { position: sticky; top: 80px; }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="#">PEPS Mart</a>
+    <button class="btn btn-outline-light ms-auto" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+  </div>
+</nav>
+
+<div class="container">
+  <!-- Hero Section -->
+  <div class="hero">
+    <h2>👋 Welcome to PEPS Mart</h2>
+    <p>Shop the best electronics products — batteries, chargers, cables, adapters and more.</p>
+  </div>
+
+  <div class="row">
+    <!-- Products Section -->
+    <div class="col-lg-8">
+      <div class="card p-3 mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-2">
+          <h5 class="mb-0">🛒 Shop Products</h5>
+          <div class="d-flex gap-2">
+            <input id="searchProducts" class="form-control form-control-sm" placeholder="Search products...">
+            <select id="filterCategory" class="form-select form-select-sm">
+              <option value="">All Categories</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-striped align-middle">
+            <thead class="table-success">
+              <tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Action</th></tr>
+            </thead>
+            <tbody id="productTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cart Section -->
+    <div class="col-lg-4">
+      <div class="card p-3 cart-card">
+        <h5 class="mb-2">🧾 Your Cart</h5>
+        <ul class="list-group mb-3" id="cartList"></ul>
+        <h6>Total: ₹<span id="cartTotal">0</span></h6>
+        <button class="btn btn-success w-100 mt-2" onclick="sendRequest()">Send Request</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* --- Helpers --- */
+function getData(k){ return JSON.parse(localStorage.getItem(k))||[]; }
+function saveData(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+/* --- Dummy Electronics Products --- */
+if(!localStorage.getItem("products")) {
+  saveData("products", [
+    {name:"Battery Pack 5000mAh", category:"Batteries", price:1500, stock:8, image:"https://via.placeholder.com/80?text=Battery"},
+    {name:"USB-C Fast Charger", category:"Chargers", price:1200, stock:10, image:"https://via.placeholder.com/80?text=Charger"},
+    {name:"HDMI Cable 2m", category:"Cables", price:400, stock:25, image:"https://via.placeholder.com/80?text=Cable"},
+    {name:"Lightning Cable", category:"Cables", price:600, stock:15, image:"https://via.placeholder.com/80?text=Cable"},
+    {name:"Bluetooth Adapter", category:"Adapters", price:900, stock:12, image:"https://via.placeholder.com/80?text=Adapter"},
+    {name:"Laptop Adapter 65W", category:"Adapters", price:1800, stock:6, image:"https://via.placeholder.com/80?text=Adapter"}
+  ]);
+}
+if(!localStorage.getItem("requests")) saveData("requests",[]);
+
+let cart = [];
+
+/* --- Render Products --- */
+function renderProducts(){
+  const products = getData("products");
+  const q = document.getElementById("searchProducts").value.toLowerCase();
+  const filter = document.getElementById("filterCategory").value;
+  const tbody = document.getElementById("productTable");
+  tbody.innerHTML = "";
+
+  // Populate categories
+  const cats = [...new Set(products.map(p=>p.category))];
+  const catSelect = document.getElementById("filterCategory");
+  catSelect.innerHTML = `<option value="">All Categories</option>` + cats.map(c=>`<option value="${c}">${c}</option>`).join("");
+  catSelect.value = filter;
+
+  products.forEach((p,i)=>{
+    if((!q || p.name.toLowerCase().includes(q)) && (!filter || p.category===filter)){
+      tbody.insertAdjacentHTML("beforeend", `
+        <tr>
+          <td><img src="${p.image}" width="50"></td>
+          <td>${escapeHtml(p.name)}</td>
+          <td>${escapeHtml(p.category)}</td>
+          <td>₹${p.price}</td>
+          <td>${p.stock}</td>
+          <td><button class="btn btn-sm btn-success" onclick="addToCart(${i})"><i class="fas fa-plus"></i></button></td>
+        </tr>
+      `);
+    }
+  });
+}
+
+/* --- Cart --- */
+function addToCart(i){
+  const products = getData("products");
+  const item = products[i];
+  const existing = cart.find(c=>c.name===item.name);
+  if(existing){ existing.qty++; }
+  else { cart.push({name:item.name, price:item.price, qty:1}); }
+  renderCart();
+}
+function renderCart(){
+  const ul = document.getElementById("cartList");
+  ul.innerHTML = "";
+  let total=0;
+  cart.forEach((c,idx)=>{
+    total += c.price*c.qty;
+    ul.insertAdjacentHTML("beforeend", `
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        ${escapeHtml(c.name)} x ${c.qty}
+        <div>
+          <button class="btn btn-sm btn-outline-secondary" onclick="updateQty(${idx},-1)">-</button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="updateQty(${idx},1)">+</button>
+        </div>
+      </li>
+    `);
+  });
+  document.getElementById("cartTotal").textContent=total;
+}
+function updateQty(i,delta){
+  cart[i].qty+=delta;
+  if(cart[i].qty<=0) cart.splice(i,1);
+  renderCart();
+}
+
+/* --- Send Request --- */
+function sendRequest(){
+  if(cart.length===0){ alert("Your cart is empty"); return; }
+  let total=cart.reduce((sum,c)=>sum+c.price*c.qty,0);
+  const reqs=getData("requests");
+  reqs.push({
+    name:"Customer",
+    email:"customer@peps.com",
+    items:cart.map(c=>`${c.name} (x${c.qty})`).join(", "),
+    total,
+    status:"Pending"
+  });
+  saveData("requests",reqs);
+  alert("Request sent to admin!");
+  cart=[];renderCart();
+}
+
+/* --- Logout --- */
+function logout(){ alert("Logged out! Redirecting..."); window.location.href="index.html"; }
+
+/* --- Init --- */
+document.getElementById("searchProducts").addEventListener("input", renderProducts);
+document.getElementById("filterCategory").addEventListener("change", renderProducts);
+renderProducts();
+renderCart();
+</script>
+</body>
+</html>

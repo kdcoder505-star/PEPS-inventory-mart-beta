@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PEPS Mart — Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root { --green:#28a745; --green-dark:#1e7e34; --gradient: linear-gradient(135deg,#28a745,#1e7e34); }
+    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:#f8fdf8; }
+    .navbar { background: var(--green-dark); }
+    .navbar .nav-link, .navbar .navbar-brand { color: #fff !important; }
+    .hero { background: var(--gradient); color:#fff; padding:1.25rem; border-radius:.6rem; margin:1rem 0; text-align:center; }
+    .card { border-radius:.6rem; box-shadow:0 6px 18px rgba(0,0,0,.06); }
+    .product-img { width:48px; height:48px; object-fit:cover; border-radius:6px; }
+    footer { background:var(--green-dark); color:#fff; padding:1rem 0; text-align:center; margin-top:2rem; }
+    /* small responsive tweaks */
+    @media (max-width:575px) { .hero p { font-size: .95rem; } }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="#">PEPS Admin</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="#dashboard">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="#inventory">Inventory</a></li>
+        <li class="nav-item"><a class="nav-link" href="#staff">Staff</a></li>
+        <li class="nav-item"><a class="nav-link" href="#requests">Requests</a></li>
+        <li class="nav-item"><a class="nav-link" href="#returns">Returns</a></li>
+        <li class="nav-item"><a class="nav-link" href="#history">History</a></li>
+        <li class="nav-item"><a class="nav-link" href="index.html" onclick="logout()">Logout</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="hero">
+    <h2>⚙️ Admin Dashboard</h2>
+    <p>Manage products, staff, requests and returns. Admins have full control.</p>
+  </div>
+
+  <!-- Dashboard cards -->
+  <div class="row g-3 mb-4" id="dashboard">
+    <div class="col-6 col-md-3"><div class="card p-3 text-center" onclick="scrollTo('inventory')"><i class="fas fa-box fa-2x mb-2 text-success"></i><h4 id="totalProducts">0</h4><div class="text-muted">Products</div></div></div>
+    <div class="col-6 col-md-3"><div class="card p-3 text-center" onclick="scrollTo('staff')"><i class="fas fa-users fa-2x mb-2 text-primary"></i><h4 id="totalStaff">0</h4><div class="text-muted">Staff</div></div></div>
+    <div class="col-6 col-md-3"><div class="card p-3 text-center" onclick="scrollTo('requests')"><i class="fas fa-envelope fa-2x mb-2 text-info"></i><h4 id="pendingRequests">0</h4><div class="text-muted">Pending Requests</div></div></div>
+    <div class="col-6 col-md-3"><div class="card p-3 text-center" onclick="scrollTo('returns')"><i class="fas fa-undo fa-2x mb-2 text-secondary"></i><h4 id="returnsCount">0</h4><div class="text-muted">Returns</div></div></div>
+  </div>
+
+  <!-- Inventory -->
+  <div class="card p-3 mb-4" id="inventory">
+    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-2">
+      <h5 class="mb-0">Inventory</h5>
+      <div class="d-flex gap-2">
+        <input id="searchInventory" class="form-control form-control-sm" placeholder="Search products...">
+        <select id="filterCategory" class="form-select form-select-sm"><option value="">All Categories</option></select>
+        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addProductModal"><i class="fas fa-plus"></i> Add Product</button>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead class="table-success">
+          <tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th style="min-width:140px">Action</th></tr>
+        </thead>
+        <tbody id="inventoryTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Staff -->
+  <div class="card p-3 mb-4" id="staff">
+    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-2">
+      <h5 class="mb-0">Staff Management</h5>
+      <div class="d-flex gap-2">
+        <input id="searchStaff" class="form-control form-control-sm" placeholder="Search staff...">
+        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addStaffModal"><i class="fas fa-user-plus"></i> Add Staff</button>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead class="table-primary"><tr><th>Name</th><th>Email</th><th>Role</th><th style="min-width:120px">Action</th></tr></thead>
+        <tbody id="staffTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Requests -->
+  <div class="card p-3 mb-4" id="requests">
+    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-2">
+      <h5 class="mb-0">Customer Requests</h5>
+      <div class="d-flex gap-2">
+        <input id="searchRequests" class="form-control form-control-sm" placeholder="Search requests...">
+        <select id="filterRequestStatus" class="form-select form-select-sm">
+          <option value="">All Status</option><option value="Pending">Pending</option><option value="Approved">Approved</option><option value="Completed">Completed</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead class="table-success"><tr><th>Customer</th><th>Email</th><th>Items</th><th>Total</th><th>Status</th><th style="min-width:120px">Action</th></tr></thead>
+        <tbody id="requestTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Returns -->
+  <div class="card p-3 mb-4" id="returns">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="mb-0">Returns</h5>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead class="table-success"><tr><th>Customer</th><th>Item</th><th>Date</th><th>Status</th><th style="min-width:120px">Action</th></tr></thead>
+        <tbody id="returnTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="card p-3 mb-4" id="history">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="mb-0">History</h5>
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-secondary" onclick="downloadHistory()"><i class="fas fa-download"></i> Download</button>
+        <button class="btn btn-sm btn-danger" onclick="clearHistory()"><i class="fas fa-trash"></i> Clear All</button>
+      </div>
+    </div>
+    <ul class="list-group" id="historyList"></ul>
+  </div>
+</div>
+
+<!-- Admins -->
+<div class="container">
+<div class="card p-3 mb-4" id="admins">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h5 class="mb-0">Admins Management</h5>
+    <div class="d-flex gap-2">
+      <input id="searchAdmins" class="form-control form-control-sm" placeholder="Search admins...">
+      <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#addAdminModal">
+        <i class="fas fa-user-shield"></i> Add Admin
+      </button>
+      <button class="btn btn-sm btn-secondary" onclick="downloadAdmins()">
+        <i class="fas fa-download"></i> Download
+      </button>
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead class="table-danger">
+        <tr><th>Name</th><th>Email</th><th>Action</th></tr>
+      </thead>
+      <tbody id="adminTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Admin Modal -->
+<div class="modal fade" id="addAdminModal" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <form id="addAdminForm">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Admin</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input id="aname" class="form-control mb-2" placeholder="Name" required>
+        <input id="aemail" class="form-control mb-2" placeholder="Email" required>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-danger">Add Admin</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+</div>
+
+<footer><small>&copy; 2024 PEPS Mart</small></footer>
+
+<!-- ---------------- Modals ---------------- -->
+
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <form id="addProductForm">
+    <div class="modal-header"><h5 class="modal-title">Add Product</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <input id="pname" class="form-control mb-2" placeholder="Product name" required>
+      <div class="d-flex gap-2 mb-2">
+        <select id="pcatSelect" class="form-select"><option value="">Select category</option></select>
+        <input id="pcatNew" class="form-control" placeholder="Or new category">
+      </div>
+      <input id="pprice" type="number" class="form-control mb-2" placeholder="Price" required>
+      <input id="pstock" type="number" class="form-control mb-2" placeholder="Stock" required>
+      <input id="pimg" class="form-control mb-2" placeholder="Image URL (optional)">
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-success">Add Product</button></div>
+  </form>
+</div></div></div>
+
+<!-- Edit Product Modal -->
+<div class="modal fade" id="editProductModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <form id="editProductForm">
+    <div class="modal-header"><h5 class="modal-title">Edit Product</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="editIndex">
+      <input id="editName" class="form-control mb-2" required>
+      <div class="d-flex gap-2 mb-2">
+        <select id="editCatSelect" class="form-select"></select>
+        <input id="editCatNew" class="form-control" placeholder="Or new category">
+      </div>
+      <input id="editPrice" type="number" class="form-control mb-2" required>
+      <input id="editStock" type="number" class="form-control mb-2" required>
+      <input id="editImg" class="form-control mb-2" placeholder="Image URL (optional)">
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-success">Save Changes</button></div>
+  </form>
+</div></div></div>
+
+<!-- Add Staff Modal -->
+<div class="modal fade" id="addStaffModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <form id="addStaffForm">
+    <div class="modal-header"><h5 class="modal-title">Add Staff</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <input id="sname" class="form-control mb-2" placeholder="Name" required>
+      <input id="semail" class="form-control mb-2" placeholder="Email" required>
+      <select id="srole" class="form-select mb-2"><option>Admin</option><option>Manager</option><option>Staff</option></select>
+      <input id="spass" type="password" class="form-control mb-2" placeholder="Password" required>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Add Staff</button></div>
+  </form>
+</div></div></div>
+
+<!-- Request Modal -->
+<div class="modal fade" id="requestModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Manage Request</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body">
+    <input type="hidden" id="reqIndex">
+    <p><strong>Name:</strong> <span id="reqName"></span></p>
+    <p><strong>Email:</strong> <span id="reqEmail"></span></p>
+    <p><strong>Items:</strong> <span id="reqItems"></span></p>
+    <p><strong>Total:</strong> <span id="reqTotal"></span></p>
+    <p><strong>Status:</strong> <span id="reqStatus"></span></p>
+  </div>
+  <div class="modal-footer">
+    <button id="approveBtn" class="btn btn-success">Approve</button>
+    <button id="completeBtn" class="btn btn-secondary">Complete</button>
+    <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+  </div>
+</div></div></div>
+
+<!-- Return Modal -->
+<div class="modal fade" id="returnModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <form id="editReturnForm">
+    <div class="modal-header"><h5 class="modal-title">Manage Return</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="retIndex">
+      <input id="editRName" class="form-control mb-2" required>
+      <input id="editRItem" class="form-control mb-2" required>
+      <p><strong>Date:</strong> <span id="editRDate"></span></p>
+      <select id="editRStatus" class="form-select mb-2"><option>Pending</option><option>Processed</option></select>
+    </div>
+    <div class="modal-footer">
+      <button id="deleteReturnBtn" type="button" class="btn btn-danger">Delete</button>
+      <button class="btn btn-success">Save</button>
+    </div>
+  </form>
+</div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+/* ------------------ Utilities ------------------ */
+function getData(k){ return JSON.parse(localStorage.getItem(k)) || []; }
+function saveData(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+function addHistory(msg){ const h = getData('history'); h.unshift({ msg, date: new Date().toLocaleString() }); saveData('history', h); renderHistory(); }
+function scrollTo(id){ document.getElementById(id).scrollIntoView({behavior:'smooth'}); }
+
+/* --------- Seed dummy electronics data if empty --------- */
+if(!localStorage.getItem('products')) saveData('products', [
+  {name:"Battery Pack 5000mAh", cat:"Electronics", price:1500, stock:8, img:"https://placehold.co/100x100?text=Battery"},
+  {name:"USB-C Charger 20W", cat:"Chargers", price:2000, stock:5, img:"https://placehold.co/100x100?text=Charger"},
+  {name:"HDMI Cable 2m", cat:"Cables", price:500, stock:20, img:"https://placehold.co/100x100?text=HDMI"},
+  {name:"Ethernet Cable 5m", cat:"Cables", price:700, stock:15, img:"https://placehold.co/100x100?text=Ethernet"},
+  {name:"Power Adapter 65W", cat:"Electronics", price:3500, stock:3, img:"https://placehold.co/100x100?text=Adapter"}
+]);
+if(!localStorage.getItem('staff')) saveData('staff', [
+  {name:"Super Admin", email:"admin@peps.com", role:"Admin"},
+  {name:"Jane Manager", email:"jane@peps.com", role:"Manager"},
+  {name:"John Staff", email:"john@peps.com", role:"Staff"}
+]);
+if(!localStorage.getItem('requests')) saveData('requests', [
+  {name:"Alice", email:"alice@mail.com", items:"Battery Pack x1", total:1500, status:"Pending"},
+  {name:"Bob", email:"bob@mail.com", items:"HDMI Cable x1", total:500, status:"Approved"}
+]);
+if(!localStorage.getItem('returns')) saveData('returns', [
+  {name:"Chris", item:"Defective Battery Pack", date:"2024-09-18 10:30", status:"Pending"}
+]);
+if(!localStorage.getItem('history')) saveData('history', []);
+
+/* ---------------- Inventory ---------------- */
+function renderProducts(){
+  const products = getData('products');
+  const tbody = document.getElementById('inventoryTable');
+  const q = (document.getElementById('searchInventory').value || '').toLowerCase();
+  const catFilter = document.getElementById('filterCategory').value;
+  tbody.innerHTML = '';
+  const cats = new Set();
+
+  products.forEach((p,i)=>{
+    cats.add(p.cat);
+    if( (q === '' || p.name.toLowerCase().includes(q) || p.cat.toLowerCase().includes(q))
+        && (catFilter === '' || p.cat === catFilter) ){
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td><img src="${p.img || 'https://placehold.co/50'}" class="product-img" alt=""></td>
+          <td>${escapeHtml(p.name)}</td>
+          <td>${escapeHtml(p.cat)}</td>
+          <td>${p.price}</td>
+          <td>${p.stock}</td>
+          <td>
+            <button class="btn btn-sm btn-primary me-1" onclick="openEditProduct(${i})"><i class="fas fa-edit"></i> Edit</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteProduct(${i})"><i class="fas fa-trash"></i> Delete</button>
+          </td>
+        </tr>
+      `);
+    }
+  });
+
+  // populate category selects
+  const filter = document.getElementById('filterCategory');
+  const addSel = document.getElementById('pcatSelect');
+  const editSel = document.getElementById('editCatSelect');
+  filter.innerHTML = '<option value="">All Categories</option>';
+  addSel.innerHTML = '<option value="">Select category</option>';
+  editSel.innerHTML = '<option value="">Select category</option>';
+  Array.from(cats).sort().forEach(c=>{
+    filter.insertAdjacentHTML('beforeend', `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`);
+    addSel.insertAdjacentHTML('beforeend', `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`);
+    editSel.insertAdjacentHTML('beforeend', `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`);
+  });
+
+  document.getElementById('totalProducts').textContent = products.length;
+}
+
+/* Escape HTML to prevent accidental injection in this simple demo */
+function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
+
+function deleteProduct(i){
+  if(!confirm('Delete product?')) return;
+  const products = getData('products');
+  addHistory(`Deleted product: ${products[i].name}`);
+  products.splice(i,1);
+  saveData('products', products);
+  renderProducts();
+}
+
+/* Add product */
+document.getElementById('addProductForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const name = document.getElementById('pname').value.trim();
+  const cat = (document.getElementById('pcatNew').value.trim()) || document.getElementById('pcatSelect').value;
+  const price = Number(document.getElementById('pprice').value) || 0;
+  const stock = Number(document.getElementById('pstock').value) || 0;
+  const img = document.getElementById('pimg').value.trim() || 'https://placehold.co/100x100';
+
+  if(!name || !cat){ alert('Please provide name and category'); return; }
+
+  const products = getData('products');
+  products.push({ name, cat, price, stock, img });
+  saveData('products', products);
+  addHistory(`Added product: ${name}`);
+  bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+  this.reset();
+  renderProducts();
+});
+
+/* Edit product */
+function openEditProduct(i){
+  const products = getData('products');
+  const p = products[i];
+  document.getElementById('editIndex').value = i;
+  document.getElementById('editName').value = p.name;
+  document.getElementById('editPrice').value = p.price;
+  document.getElementById('editStock').value = p.stock;
+  document.getElementById('editImg').value = p.img || '';
+  // set select after renderProducts populates it
+  renderProducts(); // ensure categories present
+  document.getElementById('editCatSelect').value = p.cat;
+  document.getElementById('editCatNew').value = '';
+  new bootstrap.Modal(document.getElementById('editProductModal')).show();
+}
+document.getElementById('editProductForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const idx = Number(document.getElementById('editIndex').value);
+  const products = getData('products');
+  const name = document.getElementById('editName').value.trim();
+  const cat = (document.getElementById('editCatNew').value.trim()) || document.getElementById('editCatSelect').value;
+  const price = Number(document.getElementById('editPrice').value) || 0;
+  const stock = Number(document.getElementById('editStock').value) || 0;
+  const img = document.getElementById('editImg').value.trim() || 'https://placehold.co/100x100';
+  if(!name || !cat){ alert('Please provide name and category'); return; }
+  products[idx] = { name, cat, price, stock, img };
+  saveData('products', products);
+  addHistory(`Edited product: ${name}`);
+  bootstrap.Modal.getInstance(document.getElementById('editProductModal')).hide();
+  renderProducts();
+});
+
+/* ---------------- Staff ---------------- */
+function renderStaff(){
+  const staff = getData('staff');
+  const tbody = document.getElementById('staffTable');
+  const q = (document.getElementById('searchStaff').value || '').toLowerCase();
+  tbody.innerHTML = '';
+  staff.forEach((s,i)=>{
+    if(q === '' || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q)){
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td>${escapeHtml(s.name)}</td>
+          <td>${escapeHtml(s.email)}</td>
+          <td>${escapeHtml(s.role)}</td>
+          <td>
+            <button class="btn btn-sm btn-danger" onclick="deleteStaff(${i})"><i class="fas fa-trash"></i> Delete</button>
+          </td>
+        </tr>
+      `);
+    }
+  });
+  document.getElementById('totalStaff').textContent = staff.length;
+}
+
+function deleteStaff(i){
+  const staff = getData('staff');
+  const removed = staff[i];
+  if(!confirm(`Delete staff ${removed.name}?`)) return;
+  staff.splice(i,1);
+  saveData('staff', staff);
+  addHistory(`Deleted staff: ${removed.name}`);
+  renderStaff();
+}
+
+/* Add staff */
+document.getElementById('addStaffForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const name = document.getElementById('sname').value.trim();
+  const email = document.getElementById('semail').value.trim();
+  const role = document.getElementById('srole').value;
+  // password is ignored/stub for demo
+  if(!name || !email){ alert('Provide name and email'); return; }
+  const staff = getData('staff');
+  staff.push({ name, email, role });
+  saveData('staff', staff);
+  addHistory(`Added staff: ${name} (${role})`);
+  bootstrap.Modal.getInstance(document.getElementById('addStaffModal')).hide();
+  this.reset();
+  renderStaff();
+});
+
+
+/* --- Admins --- */
+function renderAdmins(){
+  const admins = getData('admins');
+  const tbody = document.getElementById('adminTable');
+  const q = (document.getElementById('searchAdmins').value || '').toLowerCase();
+  tbody.innerHTML = '';
+  admins.forEach((a,i)=>{
+    if(q===""||a.name.toLowerCase().includes(q)||a.email.toLowerCase().includes(q)){
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td>${escapeHtml(a.name)}</td>
+          <td>${escapeHtml(a.email)}</td>
+          <td>
+            ${a.name==="Super Admin"
+              ? "<span class='text-muted'>Protected</span>"
+              : `<button class="btn btn-sm btn-danger" onclick="deleteAdmin(${i})">
+                   <i class="fas fa-trash"></i>
+                 </button>`}
+          </td>
+        </tr>`);
+    }
+  });
+  document.getElementById('totalAdmins').textContent = admins.length;
+}
+
+document.getElementById('addAdminForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const name = document.getElementById('aname').value.trim();
+  const email = document.getElementById('aemail').value.trim();
+  if(!name||!email){alert('Fill all fields');return;}
+  const admins = getData('admins');
+  admins.push({name,email});
+  saveData('admins',admins);
+  addHistory(`Added admin: ${name}`);
+  bootstrap.Modal.getInstance(document.getElementById('addAdminModal')).hide();
+  e.target.reset();
+  renderAdmins();
+});
+
+function deleteAdmin(i){
+  let admins = getData('admins');
+  if(admins[i].name==="Super Admin"){ alert("Cannot delete Super Admin"); return; }
+  if(!confirm(`Delete admin: ${admins[i].name}?`)) return;
+  addHistory(`Deleted admin: ${admins[i].name}`);
+  admins.splice(i,1);
+  saveData('admins',admins);
+  renderAdmins();
+}
+
+function downloadAdmins(){
+  const admins=getData('admins');
+  if(admins.length===0){alert('No admins to download');return;}
+  let csv="Name,Email\n"+admins.map(a=>`"${a.name}","${a.email}"`).join("\n");
+  const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download="admins.csv";a.click();URL.revokeObjectURL(url);
+}
+
+document.getElementById('searchAdmins').addEventListener('input', renderAdmins);
+
+
+/* ---------------- Requests ---------------- */
+function renderRequests(){
+  const reqs = getData('requests');
+  const tbody = document.getElementById('requestTable');
+  const q = (document.getElementById('searchRequests').value || '').toLowerCase();
+  const statusFilter = document.getElementById('filterRequestStatus').value;
+  tbody.innerHTML = '';
+  reqs.forEach((r,i)=>{
+    if( (q === '' || r.name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q) || r.items.toLowerCase().includes(q))
+        && (statusFilter === '' || r.status === statusFilter) ){
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td>${escapeHtml(r.name)}</td>
+          <td>${escapeHtml(r.email)}</td>
+          <td>${escapeHtml(r.items)}</td>
+          <td>${r.total}</td>
+          <td>${r.status}</td>
+          <td>
+            <button class="btn btn-sm btn-primary" onclick="openRequest(${i})"><i class="fas fa-edit"></i> Manage</button>
+          </td>
+        </tr>
+      `);
+    }
+  });
+  document.getElementById('pendingRequests').textContent = reqs.filter(x=>x.status==='Pending').length;
+}
+
+function openRequest(i){
+  const reqs = getData('requests');
+  const r = reqs[i];
+  document.getElementById('reqIndex').value = i;
+  document.getElementById('reqName').textContent = r.name;
+  document.getElementById('reqEmail').textContent = r.email;
+  document.getElementById('reqItems').textContent = r.items;
+  document.getElementById('reqTotal').textContent = r.total;
+  document.getElementById('reqStatus').textContent = r.status;
+  // wire approve/complete
+  document.getElementById('approveBtn').onclick = ()=>updateRequest(i,'Approved');
+  document.getElementById('completeBtn').onclick = ()=>updateRequest(i,'Completed');
+  new bootstrap.Modal(document.getElementById('requestModal')).show();
+}
+
+function updateRequest(i, status){
+  const reqs = getData('requests');
+  reqs[i].status = status;
+  saveData('requests', reqs);
+  addHistory(`Request ${status}: ${reqs[i].name}`);
+  renderRequests();
+  bootstrap.Modal.getInstance(document.getElementById('requestModal')).hide();
+}
+
+/* ---------------- Returns ---------------- */
+function renderReturns(){
+  const rets = getData('returns');
+  const tbody = document.getElementById('returnTable');
+  tbody.innerHTML = '';
+  rets.forEach((r,i)=>{
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td>${escapeHtml(r.name)}</td>
+        <td>${escapeHtml(r.item)}</td>
+        <td>${escapeHtml(r.date)}</td>
+        <td>${escapeHtml(r.status)}</td>
+        <td>
+          <button class="btn btn-sm btn-primary" onclick="openReturn(${i})"><i class="fas fa-edit"></i> Manage</button>
+        </td>
+      </tr>
+    `);
+  });
+  document.getElementById('returnsCount').textContent = rets.length;
+}
+
+function openReturn(i){
+  const rets = getData('returns');
+  const r = rets[i];
+  document.getElementById('retIndex').value = i;
+  document.getElementById('editRName').value = r.name;
+  document.getElementById('editRItem').value = r.item;
+  document.getElementById('editRDate').textContent = r.date;
+  document.getElementById('editRStatus').value = r.status;
+  document.getElementById('deleteReturnBtn').onclick = ()=>deleteReturn(i);
+  new bootstrap.Modal(document.getElementById('returnModal')).show();
+}
+
+document.getElementById('editReturnForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const i = Number(document.getElementById('retIndex').value);
+  const rets = getData('returns');
+  rets[i] = {
+    name: document.getElementById('editRName').value.trim(),
+    item: document.getElementById('editRItem').value.trim(),
+    date: document.getElementById('editRDate').textContent || new Date().toLocaleString(),
+    status: document.getElementById('editRStatus').value
+  };
+  saveData('returns', rets);
+  addHistory(`Return updated: ${rets[i].name} - ${rets[i].item}`);
+  renderReturns();
+  bootstrap.Modal.getInstance(document.getElementById('returnModal')).hide();
+});
+
+function deleteReturn(i){
+  if(!confirm('Delete return?')) return;
+  const rets = getData('returns');
+  addHistory(`Return deleted: ${rets[i].name} - ${rets[i].item}`);
+  rets.splice(i,1);
+  saveData('returns', rets);
+  renderReturns();
+  bootstrap.Modal.getInstance(document.getElementById('returnModal')).hide();
+}
+
+/* ---------------- History ---------------- */
+function renderHistory(){
+  const h = getData('history');
+  const ul = document.getElementById('historyList');
+  ul.innerHTML = '';
+  h.forEach(entry=>{
+    ul.insertAdjacentHTML('beforeend', `<li class="list-group-item">${escapeHtml(entry.msg)} <small class="text-muted">(${escapeHtml(entry.date)})</small></li>`);
+  });
+}
+function clearHistory(){ if(!confirm('Clear all history?')) return; saveData('history', []); renderHistory(); }
+function downloadHistory(){
+  const h = getData('history');
+  if(h.length === 0){ alert('No history to download.'); return; }
+  const csv = 'Message,Date\n' + h.map(r => `"${r.msg.replaceAll('"','""')}","${r.date}"`).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'history.csv'; a.click(); URL.revokeObjectURL(url);
+}
+
+/* ---------------- Helpers and init ---------------- */
+document.getElementById('searchInventory').addEventListener('input', renderProducts);
+document.getElementById('filterCategory').addEventListener('change', renderProducts);
+document.getElementById('searchStaff').addEventListener('input', renderStaff);
+document.getElementById('searchRequests').addEventListener('input', renderRequests);
+document.getElementById('filterRequestStatus').addEventListener('change', renderRequests);
+
+function escapeAllAndInit(){
+  // initial render of everything
+  renderProducts();
+  renderStaff();
+  renderRequests();
+  renderReturns();
+  renderHistory();
+}
+escapeAllAndInit();
+
+/* quick logout stub */
+function logout(){ alert('Logged out (demo).'); window.location.href = 'index.html'; }
+
+</script>
+</body>
+</html>
